@@ -76,7 +76,7 @@ sim.stopSimulation()</pre>
 <h4>滑軌尺寸</h4>
 <p><img alt="" height="202" src="/images/滑軌.png" width="437"/></p>
 <h1>專案二</h1>
-<h2>組合圖</h2>
+<h2>組合</h2>
 <p><img alt="" height="388" src="/images/平衡組合圖.png" width="433"/></p>
 <p><img alt="" height="353" src="/images/仔入照片.png" width="430"/></p>
 <h2>尺寸設計</h2>
@@ -92,7 +92,10 @@ sim.stopSimulation()</pre>
 <p><img alt="" height="337" src="/images/底板.png" width="479"/></p>
 <p>底板柱</p>
 <p><img alt="" height="406" src="/images/底板柱.png" width="484"/></p>
-<h1>w15</h1>
+<h2>模擬</h2>
+<p></p>
+<p><video autoplay="autoplay" class="winkVideoClass" controls="controls" data-dirname="/cmsimde/static" data-varname="winkVideoData_creo10" height="630" muted="true" width="1008">
+<source src="./../downloads/圈球333.mp4" type="video/mp4"/></video></p><h1>w15</h1>
 <p>設計繪圖</p>
 <p><img alt="" height="263" src="/images/模擬畫面.png" width="405"/></p>
 <p>底板</p>
@@ -100,10 +103,59 @@ sim.stopSimulation()</pre>
 <p>軌道</p>
 <p><img alt="" height="361" src="/images/軌道22.png" width="404"/></p>
 <p></p>
+<pre class="brush:py;auto-links:false;toolbar:false" contenteditable="false"># 以下的 zmq 程式庫已經過修改, 可以在 IPv4 與 IPv6 環境下使用
+# 針對 CoppeliaSim 的 zmq 延伸程式, Python 需要安裝 cbor 與 pyzmq 等兩個模組
+# pip install cbor pyzmq
+from zmqRemoteApi_IPv6 import RemoteAPIClient
+# 由於在 zmq 程式執行時, 希望讓使用者可以透過鍵盤 (或其他電子電機訊號) 指令控制遠端的機電模擬場景
+# Python 程式環境還需要安裝 keyboard 模組, pip install keyboard
+import keyboard
+
+# 利用以下程式碼連接 CoppeliaSim remote API server
+#第一個輸入變數若為 localhost 則只能控制與程式同在的場景
+# 但若第一輸入變數為可連外的 IPv4 或 IPv6 address, 則可用來控制遠端電腦上的模擬場景
+# 23000 為 CoppeliaSim 使用 ZMQ remote API 連線控制時內定的網路埠號
+# client 與 server 的防火牆或代理主機必須讓此埠號的封包 (socket) 通過
+client = RemoteAPIClient('localhost', 23000)
+
+# 利用 getObject 取得場景中的 "sim" 物件參考對應值
+sim = client.getObject('sim')
+
+# 利用 sim 物件的 startSimulation() 方法啟動場景模擬
+sim.startSimulation()
+
+# 利用 getObject 取得 'marble' and 'sensor'  物件的參考對應值
+marble = sim.getObject('./marble')
+sensor = sim.getObject('./sensor')
+
+# 透過變數屬性設定方法將 marble 設為 non-static, 意即具有 dynamic 特性
+sim.setObjectInt32Param(marble, sim.shapeintparam_static, 0)
+
+# 主模擬程序
+while True:
+    if keyboard.is_pressed('q'):
+        # 模擬執行期間, 將滑鼠停在場景, 鍵盤按下 q 可以終止模擬
+        break
+
+    r, dist, pt, obj, normal = sim.handleProximitySensor(sensor)
+    res, dist2, point, obj2, n = sim.readProximitySensor(sensor)
+    # Get the current position of the marble
+    current_position1 = sim.getObjectPosition(marble, -1)
+    current_position2 = sim.getObjectPosition(marble, -1)
+
+    # 當鋼球碰觸感測器時
+    if res &gt; 0:
+        if current_position1[0] &lt; current_position2[0]:
+            # 對鋼球質心施以一個向量力
+            sim.addForceAndTorque(marble, [50, 0, -20], [0, 0, 0])
+
+# Stop the simulation
+sim.stopSimulation()</pre>
 <p></p>
 <p></p>
 <p><video autoplay="autoplay" class="winkVideoClass" controls="controls" data-dirname="/cmsimde/static" data-varname="winkVideoData_creo10" height="630" muted="true" width="1008">
-<source src="./../downloads/圈球333.mp4" type="video/mp4"/></video></p><h1>考試</h1>
+<source src="./../downloads/圈球333.mp4" type="video/mp4"/></video></p>
+<h1>考試</h1>
 <p><img alt="" height="212" src="/images/考試成績.png" width="415"/></p>
 <h1>自評</h1>
 <p><span>倉儲與網站評分項目:</span></p>
